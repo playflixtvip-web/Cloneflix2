@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CLONEFLIX PRO</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root { --bg: #141414; --red: #E50914; --card-bg: #222; --text: #fff; }
+        body { background: var(--bg); color: var(--text); font-family: Arial, sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        
+        /* Cabeçalho */
+        header { position: fixed; top: 0; width: 100%; height: 55px; background: rgba(0,0,0,0.9); display: flex; align-items: center; padding: 0 20px; z-index: 1000; border-bottom: 1px solid #333; justify-content: space-between; box-sizing: border-box; }
+        header h1 { color: var(--red); font-size: 1.4rem; margin: 0; font-weight: bold; letter-spacing: 2px; }
+
+        #btn-voltar { background: var(--red); color: white; border: none; padding: 6px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; display: none; }
+
+        /* Área do Player */
+        #player-area { position: relative; width: 100%; background: #000; z-index: 900; margin-top: 55px; aspect-ratio: 16/9; }
+        video { width: 100%; height: 100%; background: #000; display: block; object-fit: contain; }
+
+        /* Botão de Tela Cheia sobre o vídeo */
+        #fs-btn { position: absolute; bottom: 15px; right: 15px; background: rgba(229, 9, 20, 0.8); color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 11px; z-index: 901; font-weight: bold; cursor: pointer; }
+
+        /* Estilo de Grade */
+        .container { padding: 10px 20px 40px 20px; }
+        .titulo-secao { font-size: 1.1rem; font-weight: bold; margin: 20px 0; color: #fff; text-transform: uppercase; border-left: 4px solid var(--red); padding-left: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
+
+        /* Cards */
+        .card { background: var(--card-bg); border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; cursor: pointer; border: 2px solid transparent; height: 110px; transition: 0.2s; }
+        .card-img { width: 100%; height: 75px; background: #333; display: flex; align-items: center; justify-content: center; }
+        .card-img img { max-width: 80%; max-height: 80%; object-fit: contain; }
+        .card-nome { width: 100%; height: 35px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; text-align: center; padding: 0 5px; box-sizing: border-box; }
+        
+        .active-card { border-color: var(--red); }
+        .active-card .card-nome { background: var(--red); }
+
+        /* Ajuste para modo Deitado (Paisagem) */
+        @media (orientation: landscape) {
+            #player-area { position: fixed; top: 0; left: 0; margin-top: 0; width: 100vw; height: 100vh; z-index: 2000; }
+            header, .container { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>CLONEFLIX</h1>
+        <button id="btn-voltar" onclick="mostrarCategorias()">VOLTAR</button>
+    </header>
+
+    <div id="player-area" id="main-player-container">
+        <video id="video" controls autoplay playsinline></video>
+        <button id="fs-btn" onclick="goFullScreen()">TELA CHEIA</button>
+    </div>
+
+    <div class="container">
+        <div id="titulo" class="titulo-secao">Categorias</div>
+        <div id="vitrine" class="grid"></div>
+    </div>
+
+<script>
+    // === SUA LISTA M3U ABAIXO ===
+    const conteudoM3U = `
+#EXTM3U
+#EXTINF:-1 tvg-logo="https://conteudo.imguol.com.br/c/entretenimento/0d/2020/03/07/logomarca-tv-globo-1583609534618_v2_450x450.jpg" group-title="CANAIS ABERTOS", GLOBO
+https://d1muf25xa04so8hp06.s27-usa-cloudfront-net.online/token/2f433d41e9ea2869b5d46f7155ac727e/globosp.txt
+
+#EXTINF:-1 tvg-logo="https://upload.wikimedia.org/wikipedia/pt/thumb/a/ac/Logo_da_Rede_Bandeirantes.svg/1200px-Logo_da_Rede_Bandeirantes.svg.png" group-title="CANAIS ABERTOS", BAND
+https://evpp.mm.uol.com.br/neoliva/band/playlist.m3u8
+
+#EXTINF:-1 tvg-logo="https://cdn-icons-png.flaticon.com/512/3163/3163478.png" group-title="FILMES", CANAL DE FILMES
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+    `;
+
+    const video = document.getElementById('video');
+    const vitrine = document.getElementById('vitrine');
+    const btnVoltar = document.getElementById('btn-voltar');
+    const txtTitulo = document.getElementById('titulo');
+    let hls = null;
+    let dadosAgrupados = {};
+
+    function iniciar() {
+        const canais = parsear(conteudoM3U);
+        dadosAgrupados = canais.reduce((acc, c) => {
+            acc[c.grupo] = acc[c.grupo] || [];
+            acc[c.grupo].push(c);
+            return acc;
+        }, {});
+        mostrarCategorias();
+    }
+
+    function parsear(txt) {
+        const linhas = txt.split(/\n/);
+        const lista = [];
+        let item = null;
+        linhas.forEach(linha => {
+            linha = linha.trim();
+            if (linha.startsWith("#EXTINF:")) {
+                const partes = linha.split(',');
+                const nome = partes[partes.length - 1] || "Canal";
+                const logoMatch = linha.match(/tvg-logo="([^"]+)"/i);
+                const grupoMatch = linha.match(/group-title="([^"]+)"/i);
+                item = { 
+                    nome: nome.trim(), 
+                    logo: logoMatch ? logoMatch[1] : 'https://cdn-icons-png.flaticon.com/512/1179/1179120.png',
+                    grupo: grupoMatch ? grupoMatch[1].toUpperCase() : "GERAL" 
+                };
+            } else if (linha.startsWith("http") && item) {
+                item.url = linha;
+                lista.push(item);
+                item = null;
+            }
+        });
+        return lista;
+    }
+
+    function mostrarCategorias() {
+        vitrine.innerHTML = "";
+        btnVoltar.style.display = "none";
+        txtTitulo.innerText = "Categorias";
+        for (let cat in dadosAgrupados) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<div class="card-nome" style="height:100%; font-size:1rem;">${cat}</div>`;
+            card.onclick = () => mostrarCanais(cat);
+            vitrine.appendChild(card);
+        }
+    }
+
+    function mostrarCanais(cat) {
+        vitrine.innerHTML = "";
+        btnVoltar.style.display = "block";
+        txtTitulo.innerText = cat;
+        dadosAgrupados[cat].forEach(c => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-img"><img src="${c.logo}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1179/1179120.png'"></div>
+                <div class="card-nome">${c.nome}</div>
+            `;
+            card.onclick = () => {
+                tocar(c.url);
+                document.querySelectorAll('.card').forEach(x => x.classList.remove('active-card'));
+                card.classList.add('active-card');
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            };
+            vitrine.appendChild(card);
+        });
+    }
+
+    function tocar(u) {
+        if (hls) { hls.destroy(); }
+        if (Hls.isSupported()) {
+            hls = new Hls();
+            hls.loadSource(u);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else {
+            video.src = u;
+            video.play();
+        }
+    }
+
+    // FUNÇÃO TURBINADA PARA TELA CHEIA E GIRO
+    async function goFullScreen() {
+        const container = document.getElementById('player-area');
+        
+        try {
+            if (container.requestFullscreen) { await container.requestFullscreen(); }
+            else if (container.webkitRequestFullscreen) { await container.webkitRequestFullscreen(); }
+
+            // Tenta girar a tela para deitado
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('landscape').catch(() => {});
+            }
+        } catch (e) {
+            // Se falhar no container, tenta direto no vídeo (comum em alguns Androids)
+            if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+        }
+    }
+
+    iniciar();
+</script>
+</body>
+</html>

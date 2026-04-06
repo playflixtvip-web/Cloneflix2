@@ -9,37 +9,33 @@
         :root { --bg: #141414; --red: #E50914; --card-bg: #222; --text: #fff; }
         body { background: var(--bg); color: var(--text); font-family: Arial, sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
         
-        /* Cabeçalho */
         header { position: fixed; top: 0; width: 100%; height: 55px; background: rgba(0,0,0,0.9); display: flex; align-items: center; padding: 0 20px; z-index: 1000; border-bottom: 1px solid #333; justify-content: space-between; box-sizing: border-box; }
         header h1 { color: var(--red); font-size: 1.4rem; margin: 0; font-weight: bold; letter-spacing: 2px; }
 
         #btn-voltar { background: var(--red); color: white; border: none; padding: 6px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; display: none; }
 
-        /* Área do Player */
+        /* Área do Player - Ajustada para ser estável no giro */
         #player-area { position: relative; width: 100%; background: #000; z-index: 900; margin-top: 55px; aspect-ratio: 16/9; }
         video { width: 100%; height: 100%; background: #000; display: block; object-fit: contain; }
 
-        /* Botão de Tela Cheia sobre o vídeo */
         #fs-btn { position: absolute; bottom: 15px; right: 15px; background: rgba(229, 9, 20, 0.8); color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 11px; z-index: 901; font-weight: bold; cursor: pointer; }
 
-        /* Estilo de Grade */
         .container { padding: 10px 20px 40px 20px; }
         .titulo-secao { font-size: 1.1rem; font-weight: bold; margin: 20px 0; color: #fff; text-transform: uppercase; border-left: 4px solid var(--red); padding-left: 10px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
 
-        /* Cards */
         .card { background: var(--card-bg); border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; cursor: pointer; border: 2px solid transparent; height: 110px; transition: 0.2s; }
         .card-img { width: 100%; height: 75px; background: #333; display: flex; align-items: center; justify-content: center; }
         .card-img img { max-width: 80%; max-height: 80%; object-fit: contain; }
         .card-nome { width: 100%; height: 35px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; text-align: center; padding: 0 5px; box-sizing: border-box; }
         
         .active-card { border-color: var(--red); }
-        .active-card .card-nome { background: var(--red); }
 
-        /* Ajuste para modo Deitado (Paisagem) */
+        /* MODO PAISAGEM: Otimizado para não resetar o vídeo */
         @media (orientation: landscape) {
             #player-area { position: fixed; top: 0; left: 0; margin-top: 0; width: 100vw; height: 100vh; z-index: 2000; }
             header, .container { display: none; }
+            #fs-btn { display: none; } /* Esconde o botão manual no modo deitado */
         }
     </style>
 </head>
@@ -50,7 +46,7 @@
         <button id="btn-voltar" onclick="mostrarCategorias()">VOLTAR</button>
     </header>
 
-    <div id="player-area" id="main-player-container">
+    <div id="player-area">
         <video id="video" controls autoplay playsinline></video>
         <button id="fs-btn" onclick="goFullScreen()">TELA CHEIA</button>
     </div>
@@ -61,7 +57,7 @@
     </div>
 
 <script>
-    // === SUA LISTA M3U ABAIXO ===
+    // LISTA DE CANAIS
     const conteudoM3U = `
 #EXTM3U
 #EXTINF:-1 tvg-logo="https://conteudo.imguol.com.br/c/entretenimento/0d/2020/03/07/logomarca-tv-globo-1583609534618_v2_450x450.jpg" group-title="CANAIS ABERTOS", GLOBO
@@ -136,10 +132,7 @@ https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
         dadosAgrupados[cat].forEach(c => {
             const card = document.createElement('div');
             card.className = 'card';
-            card.innerHTML = `
-                <div class="card-img"><img src="${c.logo}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1179/1179120.png'"></div>
-                <div class="card-nome">${c.nome}</div>
-            `;
+            card.innerHTML = `<div class="card-img"><img src="${c.logo}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/1179/1179120.png'"></div><div class="card-nome">${c.nome}</div>`;
             card.onclick = () => {
                 tocar(c.url);
                 document.querySelectorAll('.card').forEach(x => x.classList.remove('active-card'));
@@ -163,22 +156,12 @@ https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
         }
     }
 
-    // FUNÇÃO TURBINADA PARA TELA CHEIA E GIRO
-    async function goFullScreen() {
+    // FUNÇÃO SIMPLIFICADA (SEM BLOQUEIO DE TELA)
+    function goFullScreen() {
         const container = document.getElementById('player-area');
-        
-        try {
-            if (container.requestFullscreen) { await container.requestFullscreen(); }
-            else if (container.webkitRequestFullscreen) { await container.webkitRequestFullscreen(); }
-
-            // Tenta girar a tela para deitado
-            if (screen.orientation && screen.orientation.lock) {
-                await screen.orientation.lock('landscape').catch(() => {});
-            }
-        } catch (e) {
-            // Se falhar no container, tenta direto no vídeo (comum em alguns Androids)
-            if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
-        }
+        if (container.requestFullscreen) { container.requestFullscreen(); }
+        else if (container.webkitRequestFullscreen) { container.webkitRequestFullscreen(); }
+        else if (video.webkitEnterFullscreen) { video.webkitEnterFullscreen(); }
     }
 
     iniciar();

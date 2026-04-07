@@ -6,114 +6,99 @@
     <title>CLONEFLIX VIP</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        :root { --bg: #0b0b0b; --red: #E50914; --card: #141414; --text: #fff; --gray: #2a2a2a; }
-        body { background: var(--bg); color: var(--text); font-family: Arial, sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        :root { --bg: #0b0b0b; --red: #E50914; --card: #141414; --text: #fff; --border: #222; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+        header { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(0,0,0,0.9); display: flex; align-items: center; padding: 0 15px; z-index: 1000; justify-content: space-between; box-sizing: border-box; border-bottom: 1px solid var(--border); }
+        .btn-voltar { background: #2a2a2a; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-red { background: var(--red); color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .container-box { background: var(--card); border-radius: 12px; padding: 20px; margin: 15px; border: 1px solid var(--border); }
+        .box-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #fff; display: block; border-left: 4px solid var(--red); padding-left: 10px; }
+        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box; }
+        .btn-save { background: var(--red); color: white; width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-        header { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(0,0,0,0.95); display: flex; align-items: center; padding: 0 15px; z-index: 1000; justify-content: space-between; box-sizing: border-box; border-bottom: 1px solid #222; }
-        .btn-red { padding: 12px; background: var(--red); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; }
-        input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #333; background: var(--gray); color: #fff; box-sizing: border-box; }
-        
-        #main-content { display: none; padding-top: 60px; }
+        /* ESTILO TABELAS ADM */
+        .filtros-adm { display: flex; gap: 8px; margin-bottom: 10px; }
+        .tabela-container { overflow-x: auto; background: #0c0c0c; border-radius: 8px; max-height: 350px; overflow-y: auto; border: 1px solid #222; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #222; }
+        th { background: #1a1a1a; position: sticky; top: 0; }
+        .btn-mini { padding: 4px 6px; border-radius: 4px; border: none; color: white; cursor: pointer; font-size: 9px; margin-right: 2px; }
+
+        #main-content { display: none; padding-top: 70px; }
         #player-area { width: 100%; aspect-ratio: 16/9; background: #000; position: sticky; top: 60px; z-index: 900; display: none; border-bottom: 2px solid var(--red); }
         video { width: 100%; height: 100%; }
-
-        .category-item { background: #1a1a1a; padding: 18px; margin: 8px 15px; border-radius: 8px; cursor: pointer; border-left: 5px solid var(--red); font-weight: bold; display: flex; justify-content: space-between; }
-        #detalhe-categoria { display: none; padding: 15px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 12px; }
-        .card { background: var(--card); border-radius: 6px; overflow: hidden; border: 1px solid #222; text-align: center; position: relative; }
-        .card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
-        .badge-info { position: absolute; top: 5px; right: 5px; background: var(--red); color: white; font-size: 9px; padding: 2px 5px; border-radius: 3px; font-weight: bold; }
-
-        /* MODAIS DE NAVEGAÇÃO */
-        .modal-folder { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; padding: 25px; overflow-y: auto; }
-        .folder-item { background: #222; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--red); cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; }
-
-        /* PAINEL ADM */
-        #admin-panel { display: none; padding: 80px 15px 40px; background: #000; min-height: 100vh; }
-        .admin-box { background: #141414; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #222; }
-        .tabela-container { overflow-x: auto; background: #0c0c0c; border-radius: 6px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        td, th { padding: 12px; border-bottom: 1px solid #1a1a1a; text-align: left; }
-        .btn-mini { padding: 5px 8px; border-radius: 4px; border: none; color: white; cursor: pointer; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; padding: 15px; }
+        .card { background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); text-align: center; }
+        .card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; }
+        .card-title { font-size: 11px; padding: 8px; color: #eee; height: 30px; display: flex; align-items: center; justify-content: center; }
+        .cat-item { background: var(--card); padding: 20px; margin: 10px 15px; border-radius: 10px; border: 1px solid var(--border); display: flex; justify-content: space-between; cursor: pointer; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; padding: 20px; overflow-y: auto; }
+        .folder-item { background: #1a1a1a; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--red); cursor: pointer; display: flex; justify-content: space-between; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="login-container" style="position:fixed; inset:0; background:#000; display:flex; align-items:center; justify-content:center; z-index:9999;">
-        <div style="text-align:center; background:#141414; padding:35px; border-radius:15px; border:1px solid #333; width:85%; max-width:340px;">
-            <h1 style="color:var(--red); margin-bottom: 30px; font-size: 28px;">CLONEFLIX</h1>
+        <div class="container-box" style="width: 85%; max-width: 350px; text-align: center;">
+            <h1 style="color:var(--red); margin-bottom: 20px;">CLONEFLIX</h1>
             <input type="text" id="u-l" placeholder="Usuário">
             <input type="password" id="p-l" placeholder="Senha">
-            <button class="btn-red" id="b-e" style="width:100%">ENTRAR</button>
+            <button class="btn-save" id="btn-entrar">ENTRAR</button>
         </div>
     </div>
 
     <div id="main-content">
         <header>
-            <h2 style="color:var(--red); margin:0;">CLONEFLIX</h2>
-            <div style="display: flex; gap: 8px;">
-                <button id="b-a" class="btn-red" style="display:none; padding: 8px 12px;">ADM</button>
-                <button class="btn-red" style="background:#333" onclick="location.reload()">SAIR</button>
-            </div>
+            <button class="btn-voltar" id="btn-back-main" style="visibility: hidden;">← VOLTAR</button>
+            <button id="b-a" class="btn-red" style="display:none;">ADM</button>
+            <button class="btn-voltar" onclick="location.reload()">SAIR</button>
         </header>
         <div id="player-area"><video id="main-video" controls playsinline></video></div>
-        <div id="user-info" style="padding:15px; font-size:12px; color:#aaa; background:#111;">
-            <b>VALE ATÉ:</b> <span id="txt-validade" style="color:var(--red)">---</span>
-        </div>
-        <div id="lista-categorias"></div>
-        <div id="detalhe-categoria">
-            <button class="btn-red" id="btn-voltar-cat" style="width:100%; margin-bottom:20px; background:#222;">← VOLTAR AOS GRUPOS</button>
-            <h3 id="nome-cat-titulo" style="border-left: 4px solid var(--red); padding-left: 12px;"></h3>
-            <div class="grid" id="grid-conteudo"></div>
-        </div>
+        <div style="padding: 10px 15px; font-size: 12px; color: #888; background: #111;">VALIDADE: <span id="txt-validade" style="color:var(--red); font-weight:bold;">---</span></div>
+        <div style="padding: 0 15px;"><input type="text" id="busca-user" placeholder="🔍 Buscar no catálogo..."></div>
+        <div id="view-categorias"></div>
+        <div id="view-detalhe" style="display: none;"><div class="grid" id="grid-itens"></div></div>
     </div>
 
-    <div id="modal-temp" class="modal-folder">
-        <h2 id="m-serie-nome" style="color:var(--red); margin-top:0;"></h2>
-        <div id="lista-temp-itens"></div>
-        <button class="btn-red" onclick="fecharModais()" style="width:100%; margin-top:20px; background:#333">VOLTAR</button>
-    </div>
+    <div id="admin-panel" style="display: none; padding-top: 20px; background: #000; min-height: 100vh;">
+        <div style="padding: 0 15px;"><button class="btn-voltar" id="btn-voltar-adm">← VOLTAR AO APP</button></div>
+        
+        <div class="container-box">
+            <span class="box-title">Gerenciar Conteúdo</span>
+            <input type="hidden" id="edit-id-cont">
+            <input id="c-nome" placeholder="Nome">
+            <select id="c-tipo"><option value="serie">SÉRIE</option><option value="filme">FILME / CANAL</option></select>
+            <input id="c-cat" placeholder="Categoria (Ex: FILMES DE AÇÃO)">
+            <textarea id="c-links" placeholder="Links" rows="2"></textarea>
+            <input id="c-capa" placeholder="URL da Capa">
+            <button class="btn-save" id="btn-salvar-db">SALVAR CONTEÚDO</button>
 
-    <div id="modal-epis" class="modal-folder" style="z-index: 2001;">
-        <h2 id="m-temp-nome" style="color:var(--red); margin-top:0;"></h2>
-        <div id="lista-epis-itens"></div>
-        <button class="btn-red" onclick="document.getElementById('modal-epis').style.display='none'" style="width:100%; margin-top:20px; background:#333">VOLTAR PARA TEMPORADAS</button>
-    </div>
-
-    <div id="admin-panel">
-        <div style="display:flex; justify-content: space-between; margin-bottom: 25px;">
-            <button class="btn-red" id="b-v-adm" style="background:#333">← VOLTAR AO APP</button>
-            <button class="btn-red" onclick="location.reload()">LOGOUT</button>
-        </div>
-
-        <div class="admin-box">
-            <h3>Adicionar Filme ou Temporada</h3>
-            <p style="font-size: 10px; color: #888;">Para episódios, cole os links um embaixo do outro no campo URL.</p>
-            <input type="hidden" id="edit-cont-id">
-            <input id="c-n" placeholder="Nome (Ex: Grey's Anatomy - T1)">
-            <input id="c-c" placeholder="Categoria (Ex: SÉRIES)">
-            <textarea id="c-u" placeholder="URL do Conteúdo (Se for série, cole um link por linha)" rows="4"></textarea>
-            <input id="c-p" placeholder="URL da Capa">
-            <button class="btn-red" id="btn-salvar-manual" style="width:100%">SALVAR NO BANCO</button>
-        </div>
-
-        <div class="admin-box">
-            <h3>Clientes</h3>
-            <div style="display:flex; flex-wrap:wrap; gap:5px;">
-                <input type="hidden" id="edit-user-id">
-                <input id="a-u" placeholder="Usuário" style="flex:1">
-                <input id="a-p" placeholder="Senha" style="flex:1">
-                <input id="a-d" type="number" placeholder="Dias" style="width:60px">
-                <button id="b-c-u" class="btn-red" style="width:100%">CRIAR ACESSO</button>
+            <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+            
+            <div class="filtros-adm">
+                <input type="text" id="busca-cont-adm" placeholder="🔍 Nome..." style="flex:2; margin-bottom:0">
+                <select id="filtro-cat-adm" style="flex:1; margin-bottom:0"><option value="">TODAS</option></select>
             </div>
-            <div class="tabela-container"><table><thead><tr><th>NOME</th><th>VAL</th><th>ST</th></tr></thead><tbody id="l-u"></tbody></table></div>
+            <div class="tabela-container">
+                <table><thead><tr><th>NOME</th><th>CATEGORIA</th><th>AÇÃO</th></tr></thead><tbody id="lista-cont-adm"></tbody></table>
+            </div>
         </div>
 
-        <div class="admin-box">
-            <h3>Conteúdos</h3>
-            <div class="tabela-container"><table><thead><tr><th>NOME</th><th>GRUPO</th><th>AÇÃO</th></tr></thead><tbody id="l-c"></tbody></table></div>
+        <div class="container-box">
+            <span class="box-title">Gerenciar Usuários</span>
+            <input type="hidden" id="edit-id-user">
+            <input id="u-nome" placeholder="Login">
+            <input id="u-pass" placeholder="Senha">
+            <input type="number" id="u-dias" placeholder="Dias (999 = Vitalício)">
+            <button class="btn-save" id="btn-salvar-user" style="background: #28a745;">SALVAR USUÁRIO</button>
+            <div class="tabela-container">
+                <table><thead><tr><th>USER</th><th>STATUS</th><th>AÇÃO</th></tr></thead><tbody id="lista-user-adm"></tbody></table>
+            </div>
         </div>
     </div>
+
+    <div id="modal-temp" class="modal"><h2 id="temp-titulo" style="color:var(--red); padding-left:15px;"></h2><div id="temp-lista"></div><button class="btn-voltar" onclick="this.parentElement.style.display='none'" style="width:90%; margin:20px 5%;">FECHAR</button></div>
+    <div id="modal-epis" class="modal" style="z-index: 2001; background: #050505;"><h2 id="epis-titulo" style="color:var(--red); padding-left:15px;"></h2><div id="epis-lista"></div><button class="btn-voltar" onclick="this.parentElement.style.display='none'" style="width:90%; margin:20px 5%;">VOLTAR</button></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -121,133 +106,160 @@
 
         const firebaseConfig = { apiKey: "AIzaSyBGOGCL_TYyNrhuxS9jIa7k8Y-IyVr4ggo", databaseURL: "https://cloneflix-16f9c-default-rtdb.firebaseio.com" };
         const app = initializeApp(firebaseConfig); const db = getDatabase(app);
+        let bancoDados = []; const video = document.getElementById('main-video');
 
-        let dadosGerais = [];
-        const video = document.getElementById('main-video');
-
-        // LOGIN (Simplificado)
-        document.getElementById('b-e').onclick = async () => {
-            const user = document.getElementById('u-l').value;
-            const pass = document.getElementById('p-l').value;
-            if(user === "Rhuan" && pass === "2026") return logado(true, "ADMIN");
+        // LOGIN
+        document.getElementById('btn-entrar').onclick = async () => {
+            const u = document.getElementById('u-l').value.trim(); const p = document.getElementById('p-l').value.trim();
+            if(u === "Rhuan" && p === "2026") return logar(true, "VITALÍCIO");
             const snap = await get(ref(db, 'usuarios'));
-            let v = null;
-            snap.forEach(i => { if(i.val().user === user && i.val().pass === pass) v = i.val(); });
-            if(v && v.status === 'ativo') logado(false, "ATIVO");
-            else alert("Acesso negado ou expirado!");
+            let enc = null; snap.forEach(c => { if(c.val().user === u && c.val().pass === p) enc = {...c.val(), id: c.key}; });
+            if(enc) {
+                if(enc.suspenso) return alert("Conta suspensa!");
+                if(enc.expira === "vitalicio") return logar(false, "VITALÍCIO");
+                const dias = Math.ceil((enc.expira - Date.now()) / 86400000);
+                if(dias <= 0) return alert("Expirado!");
+                logar(false, dias + " DIAS");
+            } else alert("Acesso negado!");
         };
 
-        function logado(adm, val) {
+        function logar(adm, val) {
             document.getElementById('login-container').style.display='none';
             document.getElementById('main-content').style.display='block';
             document.getElementById('txt-validade').innerText = val;
             if(adm) document.getElementById('b-a').style.display='block';
-            carregar();
+            carregarDados();
         }
 
-        function carregar() {
+        function carregarDados() {
             onValue(ref(db, 'conteudo'), (s) => {
-                dadosGerais = []; const tabC = document.getElementById('l-c'); tabC.innerHTML = "";
-                s.forEach(i => {
-                    const d = i.val(); const k = i.key; dadosGerais.push({...d, k});
-                    tabC.innerHTML += `<tr><td>${d.nome}</td><td>${d.categoria}</td><td><button class="btn-mini" style="background:#007bff" onclick="window.editC('${k}')">ED</button></td></tr>`;
-                });
-                renderCategorias();
+                bancoDados = []; s.forEach(item => { bancoDados.push({...item.val(), id: item.key}); });
+                renderADMConteudo(); renderCategorias(); atualizarFiltroCategoriasADM();
             });
+
             onValue(ref(db, 'usuarios'), (s) => {
-                const tabU = document.getElementById('l-u'); tabU.innerHTML = "";
-                s.forEach(i => { tabU.innerHTML += `<tr><td>${i.val().user}</td><td>OK</td><td><button class="btn-mini" style="background:red" onclick="window.delU('${i.key}')">X</button></td></tr>`; });
+                const listU = document.getElementById('lista-user-adm'); listU.innerHTML = "";
+                s.forEach(item => {
+                    const d = item.val(); const id = item.key;
+                    let st = d.suspenso ? "SUSPENSO" : (d.expira === "vitalicio" ? "Vitalício" : Math.ceil((d.expira - Date.now())/86400000)+"d");
+                    listU.innerHTML += `<tr><td>${d.user}</td><td>${st}</td><td><button class="btn-mini" style="background:#007bff" onclick="window.editU('${id}')">ED</button><button class="btn-mini" style="background:#ffc107;color:#000" onclick="window.toggleU('${id}', ${d.suspenso})">S/A</button><button class="btn-mini" style="background:#dc3545" onclick="window.delU('${id}')">X</button></td></tr>`;
+                });
             });
         }
 
+        // ADM CONTEÚDO (BUSCA E FILTRO)
+        function renderADMConteudo() {
+            const list = document.getElementById('lista-cont-adm'); list.innerHTML = "";
+            const termo = document.getElementById('busca-cont-adm').value.toLowerCase();
+            const catFiltro = document.getElementById('filtro-cat-adm').value;
+
+            bancoDados.filter(b => {
+                const matchBusca = b.nome.toLowerCase().includes(termo);
+                const matchCat = catFiltro === "" || b.categoria === catFiltro;
+                return matchBusca && matchCat;
+            }).forEach(d => {
+                list.innerHTML += `<tr><td>${d.nome}</td><td>${d.categoria}</td><td><button class="btn-mini" style="background:#007bff" onclick="window.editC('${d.id}')">ED</button><button class="btn-mini" style="background:#dc3545" onclick="window.delC('${d.id}')">X</button></td></tr>`;
+            });
+        }
+
+        function atualizarFiltroCategoriasADM() {
+            const select = document.getElementById('filtro-cat-adm');
+            const cats = [...new Set(bancoDados.map(b => b.categoria))].sort();
+            const atual = select.value;
+            select.innerHTML = '<option value="">TODAS</option>';
+            cats.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
+            select.value = atual;
+        }
+
+        document.getElementById('busca-cont-adm').onkeyup = renderADMConteudo;
+        document.getElementById('filtro-cat-adm').onchange = renderADMConteudo;
+
+        // ADM CRUD CONTEÚDO
+        document.getElementById('btn-salvar-db').onclick = () => {
+            const id = document.getElementById('edit-id-cont').value;
+            const obj = { nome: document.getElementById('c-nome').value, tipo: document.getElementById('c-tipo').value, categoria: document.getElementById('c-cat').value.toUpperCase(), url: document.getElementById('c-links').value, capa: document.getElementById('c-capa').value };
+            id ? update(ref(db, `conteudo/${id}`), obj) : push(ref(db, 'conteudo'), obj);
+            alert("Salvo!"); document.getElementById('edit-id-cont').value = ""; document.getElementById('c-nome').value=""; document.getElementById('c-links').value="";
+        };
+        window.delC = (id) => confirm("Excluir?") && remove(ref(db, `conteudo/${id}`));
+        window.editC = async (id) => {
+            const d = (await get(ref(db, `conteudo/${id}`))).val();
+            document.getElementById('edit-id-cont').value = id; document.getElementById('c-nome').value = d.nome;
+            document.getElementById('c-tipo').value = d.tipo; document.getElementById('c-cat').value = d.categoria; 
+            document.getElementById('c-links').value = d.url; document.getElementById('c-capa').value = d.capa; window.scrollTo(0,0);
+        };
+
+        // ADM CRUD USUÁRIO
+        document.getElementById('btn-salvar-user').onclick = () => {
+            const id = document.getElementById('edit-id-user').value;
+            const user = document.getElementById('u-nome').value;
+            const pass = document.getElementById('u-pass').value;
+            const dias = parseInt(document.getElementById('u-dias').value);
+            let expira = (dias >= 999) ? "vitalicio" : Date.now() + (dias * 86400000);
+            const obj = { user, pass, expira, suspenso: false };
+            id ? update(ref(db, `usuarios/${id}`), obj) : push(ref(db, 'usuarios'), obj);
+            alert("Salvo!"); document.getElementById('edit-id-user').value=""; document.getElementById('u-nome').value=""; document.getElementById('u-pass').value="";
+        };
+        window.editU = async (id) => {
+            const d = (await get(ref(db, `usuarios/${id}`))).val();
+            document.getElementById('edit-id-user').value = id; document.getElementById('u-nome').value = d.user;
+            document.getElementById('u-pass').value = d.pass; document.getElementById('u-dias').value = (d.expira==="vitalicio")?999:Math.ceil((d.expira-Date.now())/86400000);
+        };
+        window.toggleU = (id, s) => update(ref(db, `usuarios/${id}`), { suspenso: !s });
+        window.delU = (id) => confirm("Excluir?") && remove(ref(db, `usuarios/${id}`));
+
+        // CLIENTE E PLAY
         function renderCategorias() {
-            const lista = document.getElementById('lista-categorias'); lista.innerHTML = "";
-            const cats = [...new Set(dadosGerais.map(d => d.categoria))].sort();
-            cats.forEach(cat => {
-                const div = document.createElement('div'); div.className = 'category-item'; div.innerHTML = `<span>${cat}</span> <span>❯</span>`;
-                div.onclick = () => abrirCategoria(cat);
-                lista.appendChild(div);
+            const container = document.getElementById('view-categorias'); container.innerHTML = "";
+            const cats = [...new Set(bancoDados.map(b => b.categoria))].sort();
+            cats.forEach(c => {
+                const div = document.createElement('div'); div.className='cat-item'; div.innerHTML=`<span>${c}</span><span>❯</span>`;
+                div.onclick = () => { document.getElementById('view-categorias').style.display='none'; document.getElementById('view-detalhe').style.display='block'; document.getElementById('btn-back-main').style.visibility='visible'; filtrar("", c); };
+                container.appendChild(div);
             });
         }
 
-        function abrirCategoria(cat) {
-            document.getElementById('lista-categorias').style.display='none';
-            document.getElementById('detalhe-categoria').style.display='block';
-            document.getElementById('nome-cat-titulo').innerText = cat;
-            const grid = document.getElementById('grid-conteudo'); grid.innerHTML = "";
-            
-            const itens = dadosGerais.filter(d => d.categoria === cat);
-            const agrupados = {};
+        function filtrar(t="", cat=null) {
+            const grid = document.getElementById('grid-itens'); grid.innerHTML = "";
+            let itens = bancoDados;
+            if(cat) itens = itens.filter(b => b.categoria === cat);
+            if(t) itens = itens.filter(b => b.nome.toLowerCase().includes(t.toLowerCase()));
+            const agrup = {};
             itens.forEach(it => {
-                const nomeSerie = it.nome.split(/ - T| T\d| Temp/i)[0].trim();
-                if(!agrupados[nomeSerie]) agrupados[nomeSerie] = [];
-                agrupados[nomeSerie].push(it);
+                if(it.tipo==='serie'){ let b=it.nome.split(" -")[0].trim(); if(!agrup[b])agrup[b]=[]; agrup[b].push(it); }
+                else { card(it.nome, it.capa, it.url, false, grid); }
             });
-
-            Object.keys(agrupados).forEach(nome => {
-                const temps = agrupados[nome];
-                const card = document.createElement('div'); card.className = 'card';
-                card.innerHTML = `<img src="${temps[0].capa}"><div style="font-size:10px; padding:8px;">${nome}</div>
-                ${temps.length > 1 || temps[0].url.includes('\n') ? `<span class="badge-info">SÉRIE</span>` : ''}`;
-                card.onclick = () => abrirTemporadas(nome, temps);
-                grid.appendChild(card);
-            });
+            Object.keys(agrup).forEach(n => card(n, agrup[n][0].capa, agrup[n], true, grid));
         }
 
-        function abrirTemporadas(nome, temps) {
-            document.getElementById('modal-temp').style.display = 'block';
-            document.getElementById('m-serie-nome').innerText = nome;
-            const container = document.getElementById('lista-temp-itens'); container.innerHTML = "";
-            temps.forEach(t => {
-                const d = document.createElement('div'); d.className = 'folder-item';
-                d.innerHTML = `<span>${t.nome.replace(nome + " - ", "")}</span> <span>❯</span>`;
-                d.onclick = () => abrirEpisodios(t.nome, t.url);
-                container.appendChild(d);
+        function card(n, c, d, s, g) {
+            const div = document.createElement('div'); div.className='card'; div.innerHTML=`<img src="${c}"><div class="card-title">${n}</div>`;
+            div.onclick = () => s ? temporadas(n, d) : play(d); g.appendChild(div);
+        }
+
+        function temporadas(n, l) {
+            document.getElementById('modal-temp').style.display='block'; document.getElementById('temp-titulo').innerText=n;
+            const c = document.getElementById('temp-lista'); c.innerHTML = "";
+            l.sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(it => {
+                const d = document.createElement('div'); d.className='folder-item'; d.innerHTML=`<span>${it.nome.split("-")[1]||"Ver"}</span><span>❯</span>`;
+                d.onclick = () => epis(it.nome, it.url); c.appendChild(d);
             });
         }
 
-        function abrirEpisodios(nomeTemp, urls) {
-            const listaLinks = urls.split(/\r?\n/).filter(l => l.trim() !== "");
-            if(listaLinks.length <= 1 && !urls.includes('\n')) return darPlay(urls);
-
-            document.getElementById('modal-epis').style.display = 'block';
-            document.getElementById('m-temp-nome').innerText = nomeTemp;
-            const container = document.getElementById('lista-epis-itens'); container.innerHTML = "";
-            listaLinks.forEach((link, index) => {
-                const d = document.createElement('div'); d.className = 'folder-item';
-                d.innerHTML = `<span>Episódio ${index + 1}</span> <span>▶</span>`;
-                d.onclick = () => { darPlay(link); fecharModais(); };
-                container.appendChild(d);
+        function epis(t, u) {
+            document.getElementById('modal-epis').style.display='block'; document.getElementById('epis-titulo').innerText=t;
+            const c = document.getElementById('epis-lista'); c.innerHTML = "";
+            u.split('\n').filter(l=>l.trim()).forEach((l,i)=>{
+                const d=document.createElement('div'); d.className='folder-item'; d.innerHTML=`<span>Episódio ${i+1}</span><span>▶</span>`;
+                d.onclick=()=>{play(l); document.getElementById('modal-temp').style.display='none'; document.getElementById('modal-epis').style.display='none';}; c.appendChild(d);
             });
         }
 
-        window.fecharModais = () => {
-            document.getElementById('modal-temp').style.display = 'none';
-            document.getElementById('modal-epis').style.display = 'none';
-        };
-
-        function darPlay(url) {
-            document.getElementById('player-area').style.display = 'block';
-            if(Hls.isSupported()){
-                const hls = new Hls(); hls.loadSource(url.trim()); hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            }
-            window.scrollTo(0,0);
-        }
-
-        document.getElementById('btn-salvar-manual').onclick = () => {
-            const obj = { nome: document.getElementById('c-n').value, categoria: document.getElementById('c-c').value.toUpperCase(), url: document.getElementById('c-u').value, capa: document.getElementById('c-p').value };
-            push(ref(db, 'conteudo'), obj).then(() => { alert("Salvo!"); location.reload(); });
-        };
-
-        document.getElementById('btn-voltar-cat').onclick = () => {
-            video.pause(); document.getElementById('player-area').style.display = 'none';
-            document.getElementById('detalhe-categoria').style.display='none';
-            document.getElementById('lista-categorias').style.display='block';
-        };
-
+        function play(u) { document.getElementById('player-area').style.display='block'; if(Hls.isSupported()){ const h=new Hls(); h.loadSource(u.trim()); h.attachMedia(video); h.on(Hls.Events.MANIFEST_PARSED,()=>video.play()); } else { video.src=u; video.play(); } window.scrollTo(0,0); }
+        document.getElementById('btn-voltar-adm').onclick = () => { document.getElementById('admin-panel').style.display='none'; document.getElementById('main-content').style.display='block'; };
         document.getElementById('b-a').onclick = () => { document.getElementById('main-content').style.display='none'; document.getElementById('admin-panel').style.display='block'; };
-        document.getElementById('b-v-adm').onclick = () => { document.getElementById('admin-panel').style.display='none'; document.getElementById('main-content').style.display='block'; };
+        document.getElementById('btn-back-main').onclick = () => { document.getElementById('view-detalhe').style.display='none'; document.getElementById('view-categorias').style.display='block'; document.getElementById('btn-back-main').style.visibility='hidden'; video.pause(); document.getElementById('player-area').style.display='none'; };
+        document.getElementById('busca-user').onkeyup = (e) => { const t = e.target.value; if(t) { document.getElementById('view-categorias').style.display='none'; document.getElementById('view-detalhe').style.display='block'; document.getElementById('btn-back-main').style.visibility='visible'; filtrar(t); } else { document.getElementById('btn-back-main').onclick(); } };
     </script>
 </body>
 </html>

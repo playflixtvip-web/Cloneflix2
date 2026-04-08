@@ -132,20 +132,38 @@
         let bancoDados = []; const video = document.getElementById('main-video');
         let listaEpisodiosAtual = []; let indexEpisodioAtual = 0; let linkAtual = "";
 
+        // LOGIN BLINDADO
         document.getElementById('btn-entrar').onclick = async () => {
-            const u = document.getElementById('u-l').value.trim(); const p = document.getElementById('p-l').value.trim();
+            const u = document.getElementById('u-l').value.trim(); 
+            const p = document.getElementById('p-l').value.trim();
+            
             if(u === "Rhuan" && p === "2026") { logar(true, "VITALÍCIO"); return; }
-            const snap = await get(ref(db, 'usuarios'));
-            let enc = null; snap.forEach(c => { if(c.val().user === u && c.val().pass === p) enc = {...c.val(), id: c.key}; });
-            if(enc) {
-                if(enc.suspenso) return alert("Conta suspensa!");
-                let validadeTexto = "";
-                if(enc.expira === "vitalicio") { validadeTexto = "VITALÍCIO"; } else {
-                    if(Date.now() > enc.expira) return alert("Acesso expirado!");
-                    const dt = new Date(enc.expira); validadeTexto = dt.toLocaleDateString('pt-BR') + " " + dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+            try {
+                const snap = await get(ref(db, 'usuarios'));
+                let enc = null;
+                snap.forEach(c => { 
+                    const d = c.val();
+                    if(d.user === u && d.pass === p) enc = {...d, id: c.key}; 
+                });
+
+                if(enc) {
+                    if(enc.suspenso) return alert("Conta suspensa!");
+                    
+                    let validadeTexto = "---";
+                    if(enc.expira === "vitalicio") { 
+                        validadeTexto = "VITALÍCIO"; 
+                    } else {
+                        const agora = Date.now();
+                        if(agora > enc.expira) return alert("Acesso expirado!");
+                        const dt = new Date(enc.expira);
+                        validadeTexto = dt.toLocaleDateString('pt-BR') + " " + dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                    }
+                    logar(false, validadeTexto);
+                } else {
+                    alert("Usuário ou senha incorretos!");
                 }
-                logar(false, validadeTexto);
-            } else { alert("Usuário ou senha incorretos!"); }
+            } catch (e) { alert("Erro de conexão!"); }
         };
 
         function logar(adm, val) {
@@ -156,8 +174,83 @@
             carregarTudo();
         }
 
-        video.ontimeupdate = () => { if(linkAtual) localStorage.setItem('time_' + btoa(linkAtual), video.currentTime); };
+        // CARREGAMENTO E GERENCIAMENTO
+        function carregarTudo() {
+            onValue(ref(db, 'conteudo'), (s) => { 
+                bancoDados = []; s.forEach(item => { bancoDados.push({...item.val(), id: item.key}); }); 
+                renderADM(); renderCategorias(); 
+            });
+            onValue(ref(db, 'usuarios'), (s) => {
+                const listU = document.getElementById('lista-user-adm'); listU.innerHTML = "";
+                s.forEach(item => {
+                    const d = item.val(); const id = item.key;
+                    let st = "";
+                    if(d.suspenso) { st = "SUSPENSO"; } 
+                    else if(d.expira === "vitalicio") { st = "Vitalício"; } 
+                    else {
+                        const dt = new Date(d.expira);
+                        st = dt.toLocaleDateString('pt-BR') + " " + dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                    }
+                    listU.innerHTML += `<tr><td>${d.user}</td><td>${st}</td><td>
+                        <button class="btn-mini" style="background:#007bff" onclick="window.editU('${id}')">ED</button>
+                        <button class="btn-mini" style="background:#17a2b8" onclick="window.addDias('${id}')">+D</button>
+                        <button class="btn-mini" style="background:#ffc107;color:black" onclick="window.toggleU('${id}', ${d.suspenso})">S/A</button>
+                        <button class="btn-mini" style="background:#dc3545" onclick="window.delU('${id}')">X</button>
+                    </td></tr>`;
+                });
+            });
+        }
 
+        // FUNÇÕES DE USUÁRIO
+        document.getElementById('btn-novo-user').onclick = () => {
+            document.getElementById('edit-id-user').value = "";
+            document.getElementById('u-nome').value = "";
+            document.getElementById('u-pass').value = "";
+            alert("Campos limpos. Digite Usuário/Senha e clique em SALVAR.");
+        };
+
+        document.getElementById('btn-salvar-user').onclick = () => {
+            const id = document.getElementById('edit-id-user').value;
+            const user = document.getElementById('u-nome').value.trim();
+            const pass = document.getElementById('u-pass').value.trim();
+            if(!user || !pass) return alert("Preencha Usuário e Senha!");
+
+            if(id) {
+                update(ref(db, `usuarios/${id}`), { user, pass });
+                alert("Dados atualizados!");
+            } else {
+                const expira = Date.now() + (1 * 3600000); // 1 hora teste
+                push(ref(db, 'usuarios'), { user, pass, expira, suspenso: false });
+                alert("Criado com 1h de teste!");
+            }
+            document.getElementById('u-nome').value = ""; document.getElementById('u-pass').value = ""; document.getElementById('edit-id-user').value = "";
+        };
+
+        window.editU = async (id) => {
+            const d = (await get(ref(db, `usuarios/${id}`))).val();
+            document.getElementById('edit-id-user').value = id; 
+            document.getElementById('u-nome').value = d.user;
+            document.getElementById('u-pass').value = d.pass;
+            window.scrollTo(0, document.body.scrollHeight);
+        };
+
+        window.addDias = async (id) => {
+            const d = (await get(ref(db, `usuarios/${id}`))).val();
+            const diasAdd = prompt("Dias a adicionar? (999=Vitalício)");
+            if(diasAdd) {
+                let novaExp;
+                if(diasAdd == "999") novaExp = "vitalicio";
+                else {
+                    let base = (d.expira === "vitalicio" || Date.now() > d.expira) ? Date.now() : d.expira;
+                    novaExp = base + (parseInt(diasAdd) * 86400000);
+                }
+                update(ref(db, `usuarios/${id}`), { expira: novaExp });
+                alert("Validade atualizada!");
+            }
+        };
+
+        // RESTANTE DAS FUNÇÕES (PLAYER E CONTEÚDO)
+        video.ontimeupdate = () => { if(linkAtual) localStorage.setItem('time_' + btoa(linkAtual), video.currentTime); };
         function play(u, lista = [], index = 0) {
             linkAtual = u.trim(); listaEpisodiosAtual = lista; indexEpisodioAtual = index;
             document.getElementById('player-area').style.display='block';
@@ -179,16 +272,13 @@
             if(Hls.isSupported()){ const h = new Hls(); h.loadSource(linkAtual); h.attachMedia(video); h.on(Hls.Events.MANIFEST_PARSED, () => iniciarVideo()); } else { video.src = linkAtual; video.play(); iniciarVideo(); }
             window.scrollTo(0,0);
         }
-
         function iniciarVideo() {
             const salvo = localStorage.getItem('time_' + btoa(linkAtual));
-            if(salvo && salvo > 5) { if(confirm("Deseja continuar de onde parou?")) video.currentTime = parseFloat(salvo); }
+            if(salvo && salvo > 5) { if(confirm("Continuar de onde parou?")) video.currentTime = parseFloat(salvo); }
             video.play();
         }
-
-        document.getElementById('btn-next').onclick = () => { if(indexEpisodioAtual < listaEpisodiosAtual.length - 1) { play(listaEpisodiosAtual[indexEpisodioAtual + 1], listaEpisodiosAtual, indexEpisodioAtual + 1); } else { alert("Último episódio!"); } };
+        document.getElementById('btn-next').onclick = () => { if(indexEpisodioAtual < listaEpisodiosAtual.length - 1) { play(listaEpisodiosAtual[indexEpisodioAtual + 1], listaEpisodiosAtual, indexEpisodioAtual + 1); } };
         document.getElementById('btn-prev').onclick = () => { if(indexEpisodioAtual > 0) { play(listaEpisodiosAtual[indexEpisodioAtual - 1], listaEpisodiosAtual, indexEpisodioAtual - 1); } };
-
         function epis(t, u) {
             document.getElementById('modal-epis').style.display='block'; document.getElementById('epis-titulo').innerText = t;
             const c = document.getElementById('epis-lista'); c.innerHTML = "";
@@ -199,35 +289,12 @@
                 c.appendChild(d);
             });
         }
-
-        function carregarTudo() {
-            onValue(ref(db, 'conteudo'), (s) => { bancoDados = []; s.forEach(item => { bancoDados.push({...item.val(), id: item.key}); }); renderADM(); renderCategorias(); });
-            onValue(ref(db, 'usuarios'), (s) => {
-                const listU = document.getElementById('lista-user-adm'); listU.innerHTML = "";
-                s.forEach(item => {
-                    const d = item.val(); const id = item.key;
-                    let st = "";
-                    if(d.suspenso) { st = "SUSPENSO"; } else if(d.expira === "vitalicio") { st = "Vitalício"; } else {
-                        const dt = new Date(d.expira); st = dt.toLocaleDateString('pt-BR') + " " + dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-                    }
-                    listU.innerHTML += `<tr><td>${d.user}</td><td>${st}</td><td>
-                        <button class="btn-mini" style="background:#007bff" onclick="window.editU('${id}')">ED</button>
-                        <button class="btn-mini" style="background:#17a2b8" onclick="window.addDias('${id}')">+D</button>
-                        <button class="btn-mini" style="background:#ffc107;color:black" onclick="window.toggleU('${id}', ${d.suspenso})">S/A</button>
-                        <button class="btn-mini" style="background:#dc3545" onclick="window.delU('${id}')">X</button>
-                    </td></tr>`;
-                });
-            });
-        }
-
         function renderADM(termo = "") {
             const list = document.getElementById('tabela-conteudo-adm'); list.innerHTML = "";
             const filtrados = bancoDados.filter(d => d.nome.toLowerCase().includes(termo.toLowerCase()));
             filtrados.forEach(d => { list.innerHTML += `<tr><td>${d.nome}</td><td style="color:var(--red); font-weight:bold;">${d.categoria}</td><td><button class="btn-mini" style="background:#007bff" onclick="window.editC('${d.id}')">ED</button><button class="btn-mini" style="background:#dc3545" onclick="window.delC('${d.id}')">X</button></td></tr>`; });
         }
-
-        document.getElementById('busca-adm').onkeyup = (e) => { renderADM(e.target.value); };
-
+        document.getElementById('busca-adm').onkeyup = (e) => renderADM(e.target.value);
         function renderCategorias() {
             const container = document.getElementById('view-categorias'); container.innerHTML = "";
             const cats = [...new Set(bancoDados.map(b => b.categoria))].sort();
@@ -255,65 +322,6 @@
                 d.onclick = () => epis(it.nome, it.url); c.appendChild(d);
             });
         }
-
-        // --- FUNÇÕES DE USUÁRIO CORRIGIDAS ---
-
-        // Limpar campos para novo usuário
-        document.getElementById('btn-novo-user').onclick = () => {
-            document.getElementById('edit-id-user').value = "";
-            document.getElementById('u-nome').value = "";
-            document.getElementById('u-pass').value = "";
-            alert("Campos limpos. Digite os dados e clique em SALVAR.");
-        };
-
-        // Salvar (Edição ou Novo)
-        document.getElementById('btn-salvar-user').onclick = () => {
-            const id = document.getElementById('edit-id-user').value;
-            const user = document.getElementById('u-nome').value.trim();
-            const pass = document.getElementById('u-pass').value.trim();
-
-            if(!user || !pass) return alert("Preencha Usuário e Senha!");
-
-            if(id) {
-                // Se estiver editando, altera apenas login/senha
-                update(ref(db, `usuarios/${id}`), { user, pass });
-                alert("Usuário atualizado!");
-            } else {
-                // Se for novo, cria com 1 hora de teste padrão
-                const expira = Date.now() + (1 * 3600000); 
-                push(ref(db, 'usuarios'), { user, pass, expira, suspenso: false });
-                alert("Novo usuário criado com 1 hora de teste!");
-            }
-            document.getElementById('edit-id-user').value = "";
-            document.getElementById('u-nome').value = "";
-            document.getElementById('u-pass').value = "";
-        };
-
-        window.editU = async (id) => {
-            const d = (await get(ref(db, `usuarios/${id}`))).val();
-            document.getElementById('edit-id-user').value = id; 
-            document.getElementById('u-nome').value = d.user;
-            document.getElementById('u-pass').value = d.pass;
-            window.scrollTo(0, document.body.scrollHeight);
-        };
-
-        window.addDias = async (id) => {
-            const d = (await get(ref(db, `usuarios/${id}`))).val();
-            const diasAdd = prompt("Quantos dias deseja adicionar? (999 para Vitalício)");
-            if(diasAdd) {
-                let novaExp;
-                if(diasAdd == "999") { novaExp = "vitalicio"; }
-                else {
-                    let base = (d.expira === "vitalicio" || Date.now() > d.expira) ? Date.now() : d.expira;
-                    novaExp = base + (parseInt(diasAdd) * 86400000);
-                }
-                update(ref(db, `usuarios/${id}`), { expira: novaExp });
-                alert("Validade atualizada!");
-            }
-        };
-
-        // --- FIM DAS FUNÇÕES DE USUÁRIO ---
-
         window.editC = async (id) => {
             const d = (await get(ref(db, `conteudo/${id}`))).val();
             document.getElementById('edit-id-cont').value = id; document.getElementById('c-nome').value = d.nome;
@@ -325,11 +333,11 @@
             const id = document.getElementById('edit-id-cont').value;
             const obj = { nome: document.getElementById('c-nome').value, tipo: document.getElementById('c-tipo').value, categoria: document.getElementById('c-cat').value.toUpperCase(), url: document.getElementById('c-links').value, capa: document.getElementById('c-capa').value };
             id ? update(ref(db, `conteudo/${id}`), obj) : push(ref(db, 'conteudo'), obj);
-            alert("Conteúdo Salvo!"); document.getElementById('edit-id-cont').value = "";
+            alert("Salvo!"); document.getElementById('edit-id-cont').value = "";
         };
         window.toggleU = (id, s) => update(ref(db, `usuarios/${id}`), { suspenso: !s });
-        window.delU = (id) => confirm("Excluir usuário?") && remove(ref(db, `usuarios/${id}`));
-        window.delC = (id) => confirm("Excluir conteúdo?") && remove(ref(db, `conteudo/${id}`));
+        window.delU = (id) => confirm("Excluir?") && remove(ref(db, `usuarios/${id}`));
+        window.delC = (id) => confirm("Excluir?") && remove(ref(db, `conteudo/${id}`));
         document.getElementById('btn-voltar-adm').onclick = () => { document.getElementById('admin-panel').style.display='none'; document.getElementById('main-content').style.display='block'; };
         document.getElementById('b-a').onclick = () => { document.getElementById('main-content').style.display='none'; document.getElementById('admin-panel').style.display='block'; };
         document.getElementById('btn-back-main').onclick = () => { document.getElementById('view-detalhe').style.display='none'; document.getElementById('view-categorias').style.display='block'; document.getElementById('btn-back-main').style.visibility='hidden'; video.pause(); document.getElementById('player-area').style.display='none'; };

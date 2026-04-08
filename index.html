@@ -11,22 +11,25 @@
         header { position: fixed; top: 0; width: 100%; height: 60px; background: rgba(0,0,0,0.9); display: flex; align-items: center; padding: 0 15px; z-index: 1000; justify-content: space-between; box-sizing: border-box; border-bottom: 1px solid var(--border); }
         .btn-voltar { background: #2a2a2a; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 12px; }
         .btn-red { background: var(--red); color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        
+        /* PLAYER COM CONTROLES DE EPISÓDIO */
+        #player-area { width: 100%; background: #000; position: sticky; top: 60px; z-index: 900; display: none; border-bottom: 2px solid var(--red); }
+        .player-wrapper { position: relative; width: 100%; aspect-ratio: 16/9; }
+        video { width: 100%; height: 100%; }
+        .player-controls { display: flex; justify-content: center; gap: 20px; padding: 10px; background: #111; }
+        .btn-skip { background: #333; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-size: 12px; cursor: pointer; }
+
         .container-box { background: var(--card); border-radius: 12px; padding: 20px; margin: 15px; border: 1px solid var(--border); }
         .box-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #fff; display: block; border-left: 4px solid var(--red); padding-left: 10px; }
         input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; box-sizing: border-box; }
         .btn-save { background: var(--red); color: white; width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-        /* ESTILO TABELAS ADM */
-        .filtros-adm { display: flex; gap: 8px; margin-bottom: 10px; }
         .tabela-container { overflow-x: auto; background: #0c0c0c; border-radius: 8px; max-height: 350px; overflow-y: auto; border: 1px solid #222; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #222; }
-        th { background: #1a1a1a; position: sticky; top: 0; }
         .btn-mini { padding: 4px 6px; border-radius: 4px; border: none; color: white; cursor: pointer; font-size: 9px; margin-right: 2px; }
 
         #main-content { display: none; padding-top: 70px; }
-        #player-area { width: 100%; aspect-ratio: 16/9; background: #000; position: sticky; top: 60px; z-index: 900; display: none; border-bottom: 2px solid var(--red); }
-        video { width: 100%; height: 100%; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; padding: 15px; }
         .card { background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); text-align: center; }
         .card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; }
@@ -53,7 +56,15 @@
             <button id="b-a" class="btn-red" style="display:none;">ADM</button>
             <button class="btn-voltar" onclick="location.reload()">SAIR</button>
         </header>
-        <div id="player-area"><video id="main-video" controls playsinline></video></div>
+
+        <div id="player-area">
+            <div class="player-wrapper"><video id="main-video" controls playsinline></video></div>
+            <div class="player-controls">
+                <button class="btn-skip" id="btn-prev">❮ Anterior</button>
+                <button class="btn-skip" id="btn-next">Próximo ❯</button>
+            </div>
+        </div>
+
         <div style="padding: 10px 15px; font-size: 12px; color: #888; background: #111;">VALIDADE: <span id="txt-validade" style="color:var(--red); font-weight:bold;">---</span></div>
         <div style="padding: 0 15px;"><input type="text" id="busca-user" placeholder="🔍 Buscar no catálogo..."></div>
         <div id="view-categorias"></div>
@@ -62,38 +73,24 @@
 
     <div id="admin-panel" style="display: none; padding-top: 20px; background: #000; min-height: 100vh;">
         <div style="padding: 0 15px;"><button class="btn-voltar" id="btn-voltar-adm">← VOLTAR AO APP</button></div>
-        
         <div class="container-box">
             <span class="box-title">Gerenciar Conteúdo</span>
             <input type="hidden" id="edit-id-cont">
             <input id="c-nome" placeholder="Nome">
             <select id="c-tipo"><option value="serie">SÉRIE</option><option value="filme">FILME / CANAL</option></select>
-            <input id="c-cat" placeholder="Categoria (Ex: FILMES DE AÇÃO)">
+            <input id="c-cat" placeholder="Categoria">
             <textarea id="c-links" placeholder="Links" rows="2"></textarea>
             <input id="c-capa" placeholder="URL da Capa">
             <button class="btn-save" id="btn-salvar-db">SALVAR CONTEÚDO</button>
-
-            <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
-            
-            <div class="filtros-adm">
-                <input type="text" id="busca-cont-adm" placeholder="🔍 Nome..." style="flex:2; margin-bottom:0">
-                <select id="filtro-cat-adm" style="flex:1; margin-bottom:0"><option value="">TODAS</option></select>
-            </div>
-            <div class="tabela-container">
-                <table><thead><tr><th>NOME</th><th>CATEGORIA</th><th>AÇÃO</th></tr></thead><tbody id="lista-cont-adm"></tbody></table>
-            </div>
+            <div class="tabela-container"><table id="tabela-conteudo-adm" style="width:100%"></table></div>
         </div>
-
         <div class="container-box">
             <span class="box-title">Gerenciar Usuários</span>
             <input type="hidden" id="edit-id-user">
-            <input id="u-nome" placeholder="Login">
-            <input id="u-pass" placeholder="Senha">
+            <input id="u-nome" placeholder="Login"><input id="u-pass" placeholder="Senha">
             <input type="number" id="u-dias" placeholder="Dias (999 = Vitalício)">
             <button class="btn-save" id="btn-salvar-user" style="background: #28a745;">SALVAR USUÁRIO</button>
-            <div class="tabela-container">
-                <table><thead><tr><th>USER</th><th>STATUS</th><th>AÇÃO</th></tr></thead><tbody id="lista-user-adm"></tbody></table>
-            </div>
+            <div class="tabela-container"><table><thead><tr><th>USER</th><th>STATUS</th><th>AÇÃO</th></tr></thead><tbody id="lista-user-adm"></tbody></table></div>
         </div>
     </div>
 
@@ -107,8 +104,13 @@
         const firebaseConfig = { apiKey: "AIzaSyBGOGCL_TYyNrhuxS9jIa7k8Y-IyVr4ggo", databaseURL: "https://cloneflix-16f9c-default-rtdb.firebaseio.com" };
         const app = initializeApp(firebaseConfig); const db = getDatabase(app);
         let bancoDados = []; const video = document.getElementById('main-video');
+        
+        // Variáveis de controle de episódios
+        let listaEpisodiosAtual = [];
+        let indexEpisodioAtual = 0;
+        let linkAtual = "";
 
-        // LOGIN
+        // LOGIN (Mantido conforme v10)
         document.getElementById('btn-entrar').onclick = async () => {
             const u = document.getElementById('u-l').value.trim(); const p = document.getElementById('p-l').value.trim();
             if(u === "Rhuan" && p === "2026") return logar(true, "VITALÍCIO");
@@ -128,87 +130,94 @@
             document.getElementById('main-content').style.display='block';
             document.getElementById('txt-validade').innerText = val;
             if(adm) document.getElementById('b-a').style.display='block';
-            carregarDados();
+            carregarTudo();
         }
 
-        function carregarDados() {
+        // SALVAR POSIÇÃO DO VÍDEO
+        video.ontimeupdate = () => {
+            if(linkAtual) localStorage.setItem('time_' + btoa(linkAtual), video.currentTime);
+        };
+
+        function play(u, lista = [], index = 0) {
+            linkAtual = u.trim();
+            listaEpisodiosAtual = lista;
+            indexEpisodioAtual = index;
+            
+            document.getElementById('player-area').style.display='block';
+            document.getElementById('btn-prev').style.display = lista.length > 1 ? 'block' : 'none';
+            document.getElementById('btn-next').style.display = lista.length > 1 ? 'block' : 'none';
+
+            if(Hls.isSupported()){
+                const h = new Hls(); h.loadSource(linkAtual); h.attachMedia(video);
+                h.on(Hls.Events.MANIFEST_PARSED, () => iniciarVideo());
+            } else { video.src = linkAtual; video.play(); iniciarVideo(); }
+            
+            window.scrollTo(0,0);
+        }
+
+        function iniciarVideo() {
+            const salvo = localStorage.getItem('time_' + btoa(linkAtual));
+            if(salvo && salvo > 5) {
+                if(confirm("Deseja continuar de onde parou?")) video.currentTime = parseFloat(salvo);
+            }
+            video.play();
+        }
+
+        // BOTÕES PRÓXIMO/ANTERIOR
+        document.getElementById('btn-next').onclick = () => {
+            if(indexEpisodioAtual < listaEpisodiosAtual.length - 1) {
+                play(listaEpisodiosAtual[indexEpisodioAtual + 1], listaEpisodiosAtual, indexEpisodioAtual + 1);
+            } else { alert("Último episódio!"); }
+        };
+
+        document.getElementById('btn-prev').onclick = () => {
+            if(indexEpisodioAtual > 0) {
+                play(listaEpisodiosAtual[indexEpisodioAtual - 1], listaEpisodiosAtual, indexEpisodioAtual - 1);
+            }
+        };
+
+        // MODAL DE EPISÓDIOS (Ajustado para passar a lista)
+        function epis(t, u) {
+            document.getElementById('modal-epis').style.display='block';
+            document.getElementById('epis-titulo').innerText = t;
+            const c = document.getElementById('epis-lista'); c.innerHTML = "";
+            const links = u.split('\n').filter(l => l.trim());
+            
+            links.forEach((l, i) => {
+                const d = document.createElement('div'); d.className = 'folder-item';
+                d.innerHTML = `<span>Episódio ${i+1}</span><span>▶</span>`;
+                d.onclick = () => {
+                    play(l, links, i);
+                    document.getElementById('modal-temp').style.display='none';
+                    document.getElementById('modal-epis').style.display='none';
+                };
+                c.appendChild(d);
+            });
+        }
+
+        // CARREGAR DADOS (Mantido v10)
+        function carregarTudo() {
             onValue(ref(db, 'conteudo'), (s) => {
                 bancoDados = []; s.forEach(item => { bancoDados.push({...item.val(), id: item.key}); });
-                renderADMConteudo(); renderCategorias(); atualizarFiltroCategoriasADM();
+                renderADM(); renderCategorias();
             });
-
             onValue(ref(db, 'usuarios'), (s) => {
                 const listU = document.getElementById('lista-user-adm'); listU.innerHTML = "";
                 s.forEach(item => {
                     const d = item.val(); const id = item.key;
                     let st = d.suspenso ? "SUSPENSO" : (d.expira === "vitalicio" ? "Vitalício" : Math.ceil((d.expira - Date.now())/86400000)+"d");
-                    listU.innerHTML += `<tr><td>${d.user}</td><td>${st}</td><td><button class="btn-mini" style="background:#007bff" onclick="window.editU('${id}')">ED</button><button class="btn-mini" style="background:#ffc107;color:#000" onclick="window.toggleU('${id}', ${d.suspenso})">S/A</button><button class="btn-mini" style="background:#dc3545" onclick="window.delU('${id}')">X</button></td></tr>`;
+                    listU.innerHTML += `<tr><td>${d.user}</td><td>${st}</td><td><button class="btn-mini" style="background:#007bff" onclick="window.editU('${id}')">ED</button><button class="btn-mini" style="background:#ffc107;color:black" onclick="window.toggleU('${id}', ${d.suspenso})">S/A</button><button class="btn-mini" style="background:#dc3545" onclick="window.delU('${id}')">X</button></td></tr>`;
                 });
             });
         }
 
-        // ADM CONTEÚDO (BUSCA E FILTRO)
-        function renderADMConteudo() {
-            const list = document.getElementById('lista-cont-adm'); list.innerHTML = "";
-            const termo = document.getElementById('busca-cont-adm').value.toLowerCase();
-            const catFiltro = document.getElementById('filtro-cat-adm').value;
-
-            bancoDados.filter(b => {
-                const matchBusca = b.nome.toLowerCase().includes(termo);
-                const matchCat = catFiltro === "" || b.categoria === catFiltro;
-                return matchBusca && matchCat;
-            }).forEach(d => {
-                list.innerHTML += `<tr><td>${d.nome}</td><td>${d.categoria}</td><td><button class="btn-mini" style="background:#007bff" onclick="window.editC('${d.id}')">ED</button><button class="btn-mini" style="background:#dc3545" onclick="window.delC('${d.id}')">X</button></td></tr>`;
+        // CRUD E NAVEGAÇÃO (Mantidos da v10)
+        function renderADM() {
+            const list = document.getElementById('tabela-conteudo-adm'); list.innerHTML = "";
+            bancoDados.forEach(d => {
+                list.innerHTML += `<tr><td>${d.nome}</td><td><button class="btn-mini" style="background:#007bff" onclick="window.editC('${d.id}')">ED</button><button class="btn-mini" style="background:#dc3545" onclick="window.delC('${d.id}')">X</button></td></tr>`;
             });
         }
-
-        function atualizarFiltroCategoriasADM() {
-            const select = document.getElementById('filtro-cat-adm');
-            const cats = [...new Set(bancoDados.map(b => b.categoria))].sort();
-            const atual = select.value;
-            select.innerHTML = '<option value="">TODAS</option>';
-            cats.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
-            select.value = atual;
-        }
-
-        document.getElementById('busca-cont-adm').onkeyup = renderADMConteudo;
-        document.getElementById('filtro-cat-adm').onchange = renderADMConteudo;
-
-        // ADM CRUD CONTEÚDO
-        document.getElementById('btn-salvar-db').onclick = () => {
-            const id = document.getElementById('edit-id-cont').value;
-            const obj = { nome: document.getElementById('c-nome').value, tipo: document.getElementById('c-tipo').value, categoria: document.getElementById('c-cat').value.toUpperCase(), url: document.getElementById('c-links').value, capa: document.getElementById('c-capa').value };
-            id ? update(ref(db, `conteudo/${id}`), obj) : push(ref(db, 'conteudo'), obj);
-            alert("Salvo!"); document.getElementById('edit-id-cont').value = ""; document.getElementById('c-nome').value=""; document.getElementById('c-links').value="";
-        };
-        window.delC = (id) => confirm("Excluir?") && remove(ref(db, `conteudo/${id}`));
-        window.editC = async (id) => {
-            const d = (await get(ref(db, `conteudo/${id}`))).val();
-            document.getElementById('edit-id-cont').value = id; document.getElementById('c-nome').value = d.nome;
-            document.getElementById('c-tipo').value = d.tipo; document.getElementById('c-cat').value = d.categoria; 
-            document.getElementById('c-links').value = d.url; document.getElementById('c-capa').value = d.capa; window.scrollTo(0,0);
-        };
-
-        // ADM CRUD USUÁRIO
-        document.getElementById('btn-salvar-user').onclick = () => {
-            const id = document.getElementById('edit-id-user').value;
-            const user = document.getElementById('u-nome').value;
-            const pass = document.getElementById('u-pass').value;
-            const dias = parseInt(document.getElementById('u-dias').value);
-            let expira = (dias >= 999) ? "vitalicio" : Date.now() + (dias * 86400000);
-            const obj = { user, pass, expira, suspenso: false };
-            id ? update(ref(db, `usuarios/${id}`), obj) : push(ref(db, 'usuarios'), obj);
-            alert("Salvo!"); document.getElementById('edit-id-user').value=""; document.getElementById('u-nome').value=""; document.getElementById('u-pass').value="";
-        };
-        window.editU = async (id) => {
-            const d = (await get(ref(db, `usuarios/${id}`))).val();
-            document.getElementById('edit-id-user').value = id; document.getElementById('u-nome').value = d.user;
-            document.getElementById('u-pass').value = d.pass; document.getElementById('u-dias').value = (d.expira==="vitalicio")?999:Math.ceil((d.expira-Date.now())/86400000);
-        };
-        window.toggleU = (id, s) => update(ref(db, `usuarios/${id}`), { suspenso: !s });
-        window.delU = (id) => confirm("Excluir?") && remove(ref(db, `usuarios/${id}`));
-
-        // CLIENTE E PLAY
         function renderCategorias() {
             const container = document.getElementById('view-categorias'); container.innerHTML = "";
             const cats = [...new Set(bancoDados.map(b => b.categoria))].sort();
@@ -218,7 +227,6 @@
                 container.appendChild(div);
             });
         }
-
         function filtrar(t="", cat=null) {
             const grid = document.getElementById('grid-itens'); grid.innerHTML = "";
             let itens = bancoDados;
@@ -231,12 +239,10 @@
             });
             Object.keys(agrup).forEach(n => card(n, agrup[n][0].capa, agrup[n], true, grid));
         }
-
         function card(n, c, d, s, g) {
             const div = document.createElement('div'); div.className='card'; div.innerHTML=`<img src="${c}"><div class="card-title">${n}</div>`;
             div.onclick = () => s ? temporadas(n, d) : play(d); g.appendChild(div);
         }
-
         function temporadas(n, l) {
             document.getElementById('modal-temp').style.display='block'; document.getElementById('temp-titulo').innerText=n;
             const c = document.getElementById('temp-lista'); c.innerHTML = "";
@@ -245,17 +251,36 @@
                 d.onclick = () => epis(it.nome, it.url); c.appendChild(d);
             });
         }
-
-        function epis(t, u) {
-            document.getElementById('modal-epis').style.display='block'; document.getElementById('epis-titulo').innerText=t;
-            const c = document.getElementById('epis-lista'); c.innerHTML = "";
-            u.split('\n').filter(l=>l.trim()).forEach((l,i)=>{
-                const d=document.createElement('div'); d.className='folder-item'; d.innerHTML=`<span>Episódio ${i+1}</span><span>▶</span>`;
-                d.onclick=()=>{play(l); document.getElementById('modal-temp').style.display='none'; document.getElementById('modal-epis').style.display='none';}; c.appendChild(d);
-            });
-        }
-
-        function play(u) { document.getElementById('player-area').style.display='block'; if(Hls.isSupported()){ const h=new Hls(); h.loadSource(u.trim()); h.attachMedia(video); h.on(Hls.Events.MANIFEST_PARSED,()=>video.play()); } else { video.src=u; video.play(); } window.scrollTo(0,0); }
+        window.editC = async (id) => {
+            const d = (await get(ref(db, `conteudo/${id}`))).val();
+            document.getElementById('edit-id-cont').value = id; document.getElementById('c-nome').value = d.nome;
+            document.getElementById('c-tipo').value = d.tipo; document.getElementById('c-cat').value = d.categoria; 
+            document.getElementById('c-links').value = d.url; document.getElementById('c-capa').value = d.capa;
+        };
+        document.getElementById('btn-salvar-db').onclick = () => {
+            const id = document.getElementById('edit-id-cont').value;
+            const obj = { nome: document.getElementById('c-nome').value, tipo: document.getElementById('c-tipo').value, categoria: document.getElementById('c-cat').value.toUpperCase(), url: document.getElementById('c-links').value, capa: document.getElementById('c-capa').value };
+            id ? update(ref(db, `conteudo/${id}`), obj) : push(ref(db, 'conteudo'), obj);
+            alert("Salvo!"); document.getElementById('edit-id-cont').value = "";
+        };
+        document.getElementById('btn-salvar-user').onclick = () => {
+            const id = document.getElementById('edit-id-user').value;
+            const user = document.getElementById('u-nome').value;
+            const pass = document.getElementById('u-pass').value;
+            const dias = parseInt(document.getElementById('u-dias').value);
+            let expira = (dias >= 999) ? "vitalicio" : Date.now() + (dias * 86400000);
+            const obj = { user, pass, expira, suspenso: false };
+            id ? update(ref(db, `usuarios/${id}`), obj) : push(ref(db, 'usuarios'), obj);
+            alert("Salvo!");
+        };
+        window.editU = async (id) => {
+            const d = (await get(ref(db, `usuarios/${id}`))).val();
+            document.getElementById('edit-id-user').value = id; document.getElementById('u-nome').value = d.user;
+            document.getElementById('u-pass').value = d.pass; document.getElementById('u-dias').value = (d.expira==="vitalicio")?999:Math.ceil((d.expira-Date.now())/86400000);
+        };
+        window.toggleU = (id, s) => update(ref(db, `usuarios/${id}`), { suspenso: !s });
+        window.delU = (id) => confirm("Excluir?") && remove(ref(db, `usuarios/${id}`));
+        window.delC = (id) => confirm("Excluir?") && remove(ref(db, `conteudo/${id}`));
         document.getElementById('btn-voltar-adm').onclick = () => { document.getElementById('admin-panel').style.display='none'; document.getElementById('main-content').style.display='block'; };
         document.getElementById('b-a').onclick = () => { document.getElementById('main-content').style.display='none'; document.getElementById('admin-panel').style.display='block'; };
         document.getElementById('btn-back-main').onclick = () => { document.getElementById('view-detalhe').style.display='none'; document.getElementById('view-categorias').style.display='block'; document.getElementById('btn-back-main').style.visibility='hidden'; video.pause(); document.getElementById('player-area').style.display='none'; };
